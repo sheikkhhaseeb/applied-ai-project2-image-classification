@@ -6,6 +6,7 @@
 **Framework:** PyTorch  
 **Model:** ResNet18  
 **Dataset:** Intel Image Classification Dataset
+**WEEK 5
 
 ## 📌 Project Overview
 
