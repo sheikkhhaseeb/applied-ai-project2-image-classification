@@ -127,6 +127,28 @@ Expected Kaggle output location:
 The model file can be downloaded from Kaggle and loaded in a compatible PyTorch environment using the same model architecture and preprocessing configuration.
 
 ---
+Week 6 proposal
+ 
+**Domain: waste sorting (garbage classification).** Sorting household waste by material is a practical computer-vision task, and the Week 5 pipeline (pretrained ResNet-18, feature extraction, then fine-tuning) can be reused on it with colour photos.
+ 
+**Problem.** Waste has to be separated by material before it can be recycled, and sorting by hand is slow and error-prone, which lets the wrong materials end up in the wrong stream. I will build an image classifier that takes a photo of one waste item and predicts its class among 10 household-waste classes: **metal, glass, biological, paper, battery, trash, cardboard, shoes, clothes and plastic**.
+ 
+**Who benefits.** Recycling and waste-management operators, municipalities running sorting programmes, and developers of "what bin does this go in" apps for households. A model like this could support, not replace, human sorters.
+ 
+**Dataset.** Garbage Classification V2 on Kaggle (sumn2u): **10 classes of household waste** as colour JPEG photos. The paper describing the dataset reports **13,348 images**; another copy online lists 19,762, so I will confirm the exact count and class sizes in my own notebook and update this README. The classes are uneven: glass has nearly 2,000 images, about four times the roughly 500 images of the trash class. Link: <https://www.kaggle.com/datasets/sumn2u/garbage-classification-v2>. I will check the licence on the Kaggle page before publishing anything and use the data for this course project only.
+ 
+**Plan.**
+- Use colour images (`GRAYSCALE = False`), resize to $224 \times 224$, and normalise with the ImageNet mean and standard deviation.
+- Stratified, grouped split of 70% / 15% / 15%. If the count is 13,348, this gives $\lfloor 0.15 \times 13{,}348 \rfloor = 2,002$ validation images, 2,002 test images and 9,344 training images.
+- Look for exact and near-duplicate images across the splits before training, because photos collected from several places can repeat.
+- Augment the training set only. Waste photos can be flipped and rotated freely, since an object has no fixed "up", and mild brightness and colour jitter suits the varied lighting. Validation and test images stay unchanged.
+- Train a new 10-class head first (`Linear(512, 10)`, $512 \times 10 + 10 = 5{,}130$ trainable parameters), then fine-tune `layer4` with two learning rates ($10^{-3}$ head, $10^{-4}$ `layer4`). Use **class weights** for the imbalance, keep the best validation epoch by macro-F1, and evaluate on the test set once.
+- Report macro-F1, per-class precision and recall, a confusion matrix and an error gallery, and compare with the Week 5 scene classifier.
+**Expected challenges.**
+- **Class imbalance.** Plain accuracy would be dominated by the biggest classes such as glass, so macro-F1 and the recall of the small classes (for example trash) are the numbers to watch.
+- **Messy, varied photos.** The dataset has different object types, backgrounds, image quality and brightness, so scores should be lower and more varied than on lab-style datasets. Classes of similar materials, such as paper and cardboard or glass and plastic, and the vague "trash" class may be confused, and I will check this in the confusion matrix.
+- **Shortcuts from the background.** The model might use the background or the setting of a photo instead of the object, and I will check this with the error gallery.
+- **Not a finished sorting system.** A good score on one public dataset does not show the model would work on a real conveyor belt with dirty, crushed or overlapping items, and I will say so when I report the results.
 
 # Week 6: Applied Computer Vision — Dataset Audit and Model Explainability
 
