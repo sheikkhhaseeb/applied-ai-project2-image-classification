@@ -127,7 +127,7 @@ Expected Kaggle output location:
 The model file can be downloaded from Kaggle and loaded in a compatible PyTorch environment using the same model architecture and preprocessing configuration.
 
 ---
-Week 6 proposal
+##Week 6 proposal
  
 **Domain: waste sorting (garbage classification).** Sorting household waste by material is a practical computer-vision task, and the Week 5 pipeline (pretrained ResNet-18, feature extraction, then fine-tuning) can be reused on it with colour photos.
  
@@ -149,6 +149,14 @@ Week 6 proposal
 - **Messy, varied photos.** The dataset has different object types, backgrounds, image quality and brightness, so scores should be lower and more varied than on lab-style datasets. Classes of similar materials, such as paper and cardboard or glass and plastic, and the vague "trash" class may be confused, and I will check this in the confusion matrix.
 - **Shortcuts from the background.** The model might use the background or the setting of a photo instead of the object, and I will check this with the error gallery.
 - **Not a finished sorting system.** A good score on one public dataset does not show the model would work on a real conveyor belt with dirty, crushed or overlapping items, and I will say so when I report the results.
+**Other candidate datasets I considered (backup options).** If the main dataset turns out to be unsuitable (licence, duplicates or missing labels), I will switch to one of these. Counts are taken from the dataset descriptions and will be re-checked in my notebook.
+ 
+| Dataset | Domain | Classes and size | Main point to watch |
+|---|---|---|---|
+| [Solar Panel Images](https://www.kaggle.com/datasets/pythonafroz/solar-panel-images) and the larger [PV Panel Defect Dataset](https://www.kaggle.com/datasets/alicjalena/pv-panel-defect-dataset) | Solar panel condition | 6 classes (bird-drop, clean, dusty, electrical-damage, physical-damage, snow-covered); the larger version has about 2,200 to 2,800 images per class | Images come from many web sources, so check for duplicates across splits |
+| Concrete Crack Images for Classification (Mendeley Data, DOI 10.17632/5y9wdsg2zt.2) | Civil inspection | 2 classes (crack, no crack), 40,000 RGB images of $227 \times 227$ | The 40,000 patches come from only 458 photos, so a grouped split is needed |
+| [Chest X-Ray Images (Pneumonia)](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia) | Medical X-ray | 2 classes (normal, pneumonia), 5,863 images; training folder 1,341 normal and 3,875 pneumonia | Strong class imbalance and a validation folder of only 16 images, so I would make my own validation split |
+| [Cell Images for Detecting Malaria](https://www.kaggle.com/datasets/iarunava/cell-images-for-detecting-malaria) | Medical microscopy | 2 classes (parasitized, uninfected), 27,558 images, balanced | Cells from one patient may appear in both train and test; false negatives matter most |
 
 # Week 6: Applied Computer Vision — Dataset Audit and Model Explainability
 
