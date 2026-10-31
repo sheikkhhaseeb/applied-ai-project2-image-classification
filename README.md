@@ -1,4 +1,4 @@
-# Applied AI Project 2: Image Classification Using Transfer Learning and Computer Vision
+# Week 6: Malaria Cell Screening (Parasitized vs Uninfected) with CNN
 
 **Author:** Haseeb Bilal  
 **Course:** Introduction to Applied AI  
