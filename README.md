@@ -128,7 +128,7 @@ The model file can be downloaded from Kaggle and loaded in a compatible PyTorch 
 
 ---
 
-# Week 6: Applied Computer Vision — Dataset Audit, Metrics, and Model Explainability
+# Week 6: Malaria Cell Screening (Parasitized vs Uninfected) with CNN
 
 ## 🎯 Objectives
 
