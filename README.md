@@ -143,14 +143,17 @@ The model file can be downloaded from Kaggle and loaded in a compatible PyTorch 
 
 ## 📂 Dataset
 
-Week 6 uses the Intel Image Classification dataset containing the following six classes:
+Dataset: NIH Malaria Cell Images Dataset
 
-1. Buildings
-2. Forest
-3. Glacier
-4. Mountain
-5. Sea
-6. Street
+The dataset contains segmented red blood cell images classified into two categories:
+
+Parasitized (infected)
+Uninfected (healthy)
+Total Images: 27,558
+
+Parasitized: 13,779
+Uninfected: 13,779
+The dataset consists of microscopic images of red blood cells collected for automated malaria detection research. Labels are derived directly from the dataset folder structure.
 
 ### Dataset Audit & Imbalance Calculations
 
