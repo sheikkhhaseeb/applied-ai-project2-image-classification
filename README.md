@@ -521,7 +521,57 @@ The dataset audit confirms that the NIH Malaria Cell Images Dataset is a high-qu
 - Entropy = 1.0
 
 
+# 14. Grad-CAM Shortcut Check
 
+## Grad-CAM Formula
+
+### Importance Weight
+
+```text
+αkc = (1/Z) Σi Σj (∂yc / ∂Aijk)
+```
+
+### Heatmap Generation
+
+```text
+LGrad-CAM = ReLU( Σk αkc Ak )
+```
+
+Where:
+
+- `Ak` = Feature Maps
+- `αkc` = Importance Weight
+- `yc` = Target Class Score
+- `ReLU` = Rectified Linear Unit
+
+---
+
+## Grad-CAM Results
+
+| Check | Observation |
+|---|---|
+| Focus on Cell Centre | ✅ Yes |
+| Focus on Cell Structure | ✅ Yes |
+| Focus on Background | ❌ No Significant Focus |
+| Focus on Image Border | Minimal |
+| Shortcut Learning Detected | No Strong Evidence |
+| Final Verdict | Model Uses Relevant Biological Features |
+
+---
+
+## Grad-CAM Analysis
+
+Grad-CAM visualizations were generated to identify which image regions influenced model predictions.
+
+The heatmaps showed:
+
+- Strong attention on infected cell regions
+- Minimal focus on image background
+- Limited attention on image borders
+- Biologically meaningful feature extraction
+## Interpretation
+
+The Grad-CAM heatmaps indicate that the CNN primarily focuses on the cell structure rather than background artefacts. No strong evidence of shortcut learning was observed. Therefore, the model appears to be learning meaningful visual patterns associated with malaria infection.
 
 ## 📊 Week 6 Results & Summary
 
