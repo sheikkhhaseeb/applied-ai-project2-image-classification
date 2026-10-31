@@ -6,6 +6,7 @@
 **Framework:** PyTorch  
 **Model:** ResNet-18  
 **Dataset:**  NIH Malaria Cell Images Dataset
+
 **Platform:** Kaggle Notebooks
 
 ---
