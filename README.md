@@ -145,13 +145,7 @@ The model file can be downloaded from Kaggle and loaded in a compatible PyTorch 
 
 Dataset: NIH Malaria Cell Images Dataset
 
-2. Datasheet
-|Section|	Answer
-Motivation	Public malaria cell dataset for infected-cell classification. Here it is reused for a screening-style task: is a red blood cell infected with malaria?
-Composition	27,558 images: Parasitized 13,779 and Uninfected 13,779. Labels are derived from the dataset folder names.
-Collection	Microscopic images of segmented red blood cells collected for malaria detection research. Images were resized to 224×224 and preprocessed before training.
-Labelling	Labels are taken directly from the folder names (Parasitized and Uninfected). No additional relabelling was performed.
-Uses	Suitable for teaching, AI research, image classification, and malaria screening assistance. Should NOT be used for clinical diagnosis or treatment decisions without expert medical review.
+SectionAnswerMotivationPublic malaria cell dataset for infected-cell classification. Here it is reused for a screening-style task: is a red blood cell infected with malaria?Composition27,558 images: Parasitized 13,779 and Uninfected 13,779. Labels are derived from the dataset folder names.CollectionMicroscopic images of segmented red blood cells collected for malaria detection research. Images were resized to 224×224 and preprocessed before training.LabellingLabels are taken directly from the folder names (Parasitized and Uninfected). No additional relabelling was performed.UsesSuitable for teaching, AI research, image classification, and malaria screening assistance. Should NOT be used for clinical diagnosis or treatment decisions without expert medical review.
 
 ### Dataset Audit & Imbalance Calculations
 
