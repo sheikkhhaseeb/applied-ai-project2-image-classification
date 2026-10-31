@@ -18,7 +18,7 @@ The project is organized into weekly sections, covering neural networks, convolu
 
 **Week 5** focuses on CNN fundamentals, feature extraction, and fine-tuning a pretrained ResNet-18 model.
 
-**Week 6** extends the work to applied computer vision, including dataset quality checks, duplicate detection, data leakage prevention, class imbalance analysis, model evaluation, and Grad-CAM visualization.
+**Week 6** This project develops a Convolutional Neural Network (CNN) model to classify microscopic blood cell images into two categories: **Parasitized** and **Uninfected**. The objective is to automate malaria detection from cell images and demonstrate a complete computer vision pipeline including data preprocessing, model training, evaluation, and performance analysis
 
 The project demonstrates the importance of both model performance and reliable evaluation when developing deep learning systems.
 
@@ -141,99 +141,387 @@ The model file can be downloaded from Kaggle and loaded in a compatible PyTorch 
 - Evaluate performance using core classification mathematical formulas (Accuracy, Precision, Recall, Macro-F1).
 - Apply Grad-CAM to investigate the visual regions influencing model predictions.
 
-## 📂 Dataset
 
 
-| Field | Description |
-|--------|-------------|
+## Dataset Information
+
+| Section | Answer |
+|----------|----------|
 | Dataset Name | NIH Malaria Cell Images Dataset |
-| Motivation | Public malaria cell dataset for infected-cell classification. Here it is reused for a screening-style task: is a red blood cell infected with malaria? |
-| Composition | 27,558 images (13,779 Parasitized, 13,779 Uninfected) |
-| Collection | Microscopic blood-cell images used for malaria detection research |
-| Labelling | Labels are taken directly from the folder names |
-| Uses | Suitable for teaching and research purposes |
+| Domain | Medical Imaging |
+| Problem Type | Binary Image Classification |
+| Classes | Parasitized, Uninfected |
+| Total Images | 27,558 |
+| Parasitized Images | 13,779 |
+| Uninfected Images | 13,779 |
+| Image Type | Microscopic Blood Cell Images |
+| Labeling Method | Folder-Based Labels |
+| Source | National Institutes of Health (NIH) |
+| Intended Use | Malaria Detection Research |
+
+
+# 📋 Dataset Datasheet
+
+| Question | Answer |
+|------------|------------|
+| Motivation | The dataset was selected to study automated malaria diagnosis using computer vision techniques. |
+| Composition | The dataset contains 27,558 microscopic blood-cell images equally distributed between infected and uninfected categories. |
+| Collection Process | Images were collected through microscopic examination of blood samples. |
+| Preprocessing | Images were resized and normalized before training. |
+| Labeling | Labels were assigned according to the folder names. |
+| Potential Uses | Medical AI, Image Classification, Deep Learning Research, Educational Projects. |
+| Limitations | Dataset may not fully represent all real-world malaria cases. |
+
 ### Dataset Audit & Imbalance Calculations
 
-The initial dataset audit produced the following sample distribution across the training classes:
+# 📊 Dataset Audit & Imbalance Calculations
 
-| Dataset Detail | Count / Value |
-|---|---:|
-| Training images | 14,034 |
-| Test images | 3,000 |
-| Number of classes | 6 |
-| Buildings — training images | 2,191 |
-| Forest — training images | 2,271 |
-| Glacier — training images | 2,404 |
-| Mountain — training images | 2,512 |
-| Sea — training images | 2,274 |
-| Street — training images | 2,382 |
+## 1. Dataset Audit Overview
 
-#### 📐 Mathematical Formulation of Class Imbalance Ratio
-The imbalance ratio quantifies the skewness between the most frequent class and the least frequent class in the dataset:
+A dataset audit was conducted before model development to evaluate dataset quality, class distribution, balance, and suitability for Convolutional Neural Network (CNN) training. The audit helps identify potential issues such as class imbalance, insufficient sample representation, labeling errors, and biased learning.
 
-$$\text{Imbalance Ratio} = \frac{\max(N_c)}{\min(N_c)}$$
+The NIH Malaria Cell Images Dataset contains two classes:
 
-Where $N_c$ represents the number of training samples in class $c$. Substituting the dataset counts:
-
-$$\text{Imbalance Ratio} = \frac{2,512}{2,191} \approx 1.147$$
-
-This low ratio ($1.147$) indicates that the six training classes are remarkably well-balanced, minimizing major classification biases.
+- Parasitized (Malaria Infected)
+- Uninfected (Healthy)
 
 ---
 
-## 📐 Mathematical Evaluation Formulas
+# 2. Dataset Composition
 
-To measure model performance rigorously during Week 6, standard evaluation metrics are computed using Confusion Matrix components: True Positives ($TP$), True Negatives ($TN$), False Positives ($FP$), and False Negatives ($FN$).
-
-### 1. Accuracy
-Measures the overall fraction of correctly predicted samples out of total samples:
-
-$$\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}$$
-
-### 2. Precision
-Measures the proportion of positive identifications that were actually correct:
-
-$$\text{Precision} = \frac{TP}{TP + FP}$$
-
-### 3. Recall (Sensitivity)
-Measures the proportion of actual positives that were identified correctly:
-
-$$\text{Recall} = \frac{TP}{TP + FN}$$
-
-### 4. F1-Score
-The harmonic mean of Precision and Recall, providing a balanced performance metric:
-
-$$\text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$$
-
-### 5. Macro-Averaged F1-Score
-Calculates the unweighted average of the F1-scores across all $C$ classes, ensuring minority classes carry equal weight:
-
-$$\text{Macro-F1} = \frac{1}{C} \sum_{c=1}^{C} \text{F1-Score}_c$$
+| Class | Number of Images |
+|---------|---------:|
+| Parasitized | 13,779 |
+| Uninfected | 13,779 |
+| Total Images | 27,558 |
 
 ---
 
-## 🧠 Methodology & Explainability
+# 3. Total Sample Verification
 
-### 1. Dataset Indexing and Quality Checks
-The dataset was indexed to map image paths and labels. Exact duplicates were filtered via hashing algorithms, while near-duplicates were assessed using structural similarity metrics to prevent data leakage between training and validation splits.
+### Formula
 
-### 2. ResNet-18 Training & Fine-Tuning
-A pretrained ResNet-18 was adapted for the 6-class target. The classification head was initialized using a linear transformation:
+\[
+Total\ Images = \sum Class\ Samples
+\]
 
-$$\text{Linear}(512, 6) \implies \text{Trainable Parameters} = (512 \times 6) + 6 = 3,078$$
+### Calculation
 
-### 3. Grad-CAM (Gradient-weighted Class Activation Mapping)
-To interpret model decisions and check for shortcut learning, Grad-CAM computes gradients of the score for class $c$ ($y^c$) with respect to the feature map activations $A^k$ of the final convolutional layer:
+\[
+Total\ Images = 13,779 + 13,779
+\]
 
-$$\alpha_k^c = \frac{1}{Z} \sum_{i} \sum_{j} \frac{\partial y^c}{\partial A_{i,j}^k}$$
+\[
+Total\ Images = 27,558
+\]
 
-The localization map is then generated as a weighted combination of forward activation maps followed by a ReLU activation:
+### Result
 
-$$L_{\text{Grad-CAM}}^c = \text{ReLU}\left(\sum_{k} \alpha_k^c A^k\right)$$
-
-This highlights exact image regions driving predictions (e.g., distinguishing mountain peaks from sky backgrounds).
+✅ Total dataset size = **27,558 images**
 
 ---
+
+# 4. Class Percentage Distribution
+
+The percentage contribution of each class was calculated to determine whether one class dominates the dataset.
+
+### Formula
+
+\[
+Class\ Percentage = \frac{Class\ Samples}{Total\ Samples} \times 100
+\]
+
+---
+
+## 4.1 Parasitized Percentage
+
+### Calculation
+
+\[
+\frac{13,779}{27,558} \times 100
+\]
+
+\[
+= 0.5 \times 100
+\]
+
+\[
+= 50\%
+\]
+
+### Result
+
+✅ Parasitized Class = **50%**
+
+---
+
+## 4.2 Uninfected Percentage
+
+### Calculation
+
+\[
+\frac{13,779}{27,558} \times 100
+\]
+
+\[
+= 0.5 \times 100
+\]
+
+\[
+= 50\%
+\]
+
+### Result
+
+✅ Uninfected Class = **50%**
+
+---
+
+# 5. Percentage Distribution Summary
+
+| Class | Images | Percentage |
+|---------|---------:|---------:|
+| Parasitized | 13,779 | 50% |
+| Uninfected | 13,779 | 50% |
+
+---
+
+# 6. Majority Class Identification
+
+The majority class is the class containing the highest number of samples.
+
+### Formula
+
+\[
+Majority\ Class = \max(Class\ Samples)
+\]
+
+### Calculation
+
+\[
+\max(13,779,\ 13,779)
+\]
+
+\[
+= 13,779
+\]
+
+### Result
+
+✅ Majority Class Size = **13,779**
+
+Since both classes contain the same number of samples, neither class dominates the dataset.
+
+---
+
+# 7. Minority Class Identification
+
+The minority class is the class containing the smallest number of samples.
+
+### Formula
+
+\[
+Minority\ Class = \min(Class\ Samples)
+\]
+
+### Calculation
+
+\[
+\min(13,779,\ 13,779)
+\]
+
+\[
+= 13,779
+\]
+
+### Result
+
+✅ Minority Class Size = **13,779**
+
+---
+
+# 8. Imbalance Ratio Calculation
+
+Class imbalance is measured using the ratio of the majority class to the minority class.
+
+### Formula
+
+\[
+Imbalance\ Ratio = \frac{Majority\ Class}{Minority\ Class}
+\]
+
+### Calculation
+
+\[
+Imbalance\ Ratio = \frac{13,779}{13,779}
+\]
+
+\[
+Imbalance\ Ratio = 1.00
+\]
+
+### Result
+
+✅ Imbalance Ratio = **1.00**
+
+---
+
+# 9. Balance Score Calculation
+
+Balance score evaluates how close the dataset is to perfect balance.
+
+### Formula
+
+\[
+Balance\ Score =
+\frac{Minority\ Class}
+{Majority\ Class}
+\]
+
+### Calculation
+
+\[
+=
+\frac{13,779}
+{13,779}
+\]
+
+\[
+=1.00
+\]
+
+### Result
+
+✅ Balance Score = **1.00 (100%)**
+
+---
+
+# 10. Class Difference Calculation
+
+Class difference determines the numerical difference between classes.
+
+### Formula
+
+\[
+Class\ Difference =
+|Majority - Minority|
+\]
+
+### Calculation
+
+\[
+=
+|13,779 - 13,779|
+\]
+
+\[
+=0
+\]
+
+### Result
+
+✅ Difference = **0 Samples**
+
+---
+
+# 11. Dataset Entropy Analysis
+
+Entropy measures the uncertainty and diversity of class distribution.
+
+### Formula
+
+\[
+Entropy=-\sum p_i \log_2(p_i)
+\]
+
+Where:
+
+\[
+p_1=p_2=0.5
+\]
+
+### Calculation
+
+\[
+Entropy=
+-(0.5\log_2 0.5 + 0.5\log_2 0.5)
+\]
+
+\[
+Entropy=
+-(0.5(-1)+0.5(-1))
+\]
+
+\[
+Entropy=1.0
+\]
+
+### Result
+
+✅ Entropy = **1.0**
+
+The maximum possible entropy for a binary dataset is 1.0, indicating perfect balance.
+
+---
+
+# 12. Dataset Quality Audit
+
+| Audit Criterion | Observation |
+|----------------|-------------|
+| Number of Classes | 2 |
+| Missing Classes | None |
+| Class Balance | Perfectly Balanced |
+| Duplicate Labels | Not Observed |
+| Label Consistency | Consistent |
+| Dataset Size | Large |
+| Binary Classification Suitability | Excellent |
+| CNN Suitability | Excellent |
+| Oversampling Required | No |
+| Undersampling Required | No |
+| Class Weighting Required | No |
+
+---
+
+# 13. Impact on Model Training
+
+Because the dataset is perfectly balanced:
+
+### Advantages
+
+- No majority-class bias.
+- CNN can learn equally from both classes.
+- Higher reliability of accuracy scores.
+- Precision and Recall remain meaningful.
+- Reduced risk of skewed predictions.
+- No need for data balancing techniques.
+
+### Techniques Not Required
+
+- Random Oversampling
+- Random Undersampling
+- SMOTE
+- Class Weights
+- Cost-Sensitive Learning
+
+---
+
+# 14. Final Audit Conclusion
+
+The dataset audit confirms that the NIH Malaria Cell Images Dataset is a high-quality and perfectly balanced binary image classification dataset.
+
+### Key Findings
+
+- Total Images = 27,558
+- Parasitized Images = 13,779
+- Uninfected Images = 13,779
+- Class Percentage = 50% vs 50%
+- Imbalance Ratio = 1.00
+- Balance Score = 100%
+- Class Difference = 0
+- Entropy = 1.0
+
+
+
 
 ## 📊 Week 6 Results & Summary
 
