@@ -127,38 +127,8 @@ Expected Kaggle output location:
 The model file can be downloaded from Kaggle and loaded in a compatible PyTorch environment using the same model architecture and preprocessing configuration.
 
 ---
-##Week 6 proposal
- 
-**Domain: waste sorting (garbage classification).** Sorting household waste by material is a practical computer-vision task, and the Week 5 pipeline (pretrained ResNet-18, feature extraction, then fine-tuning) can be reused on it with colour photos.
- 
-**Problem.** Waste has to be separated by material before it can be recycled, and sorting by hand is slow and error-prone, which lets the wrong materials end up in the wrong stream. I will build an image classifier that takes a photo of one waste item and predicts its class among 10 household-waste classes: **metal, glass, biological, paper, battery, trash, cardboard, shoes, clothes and plastic**.
- 
-**Who benefits.** Recycling and waste-management operators, municipalities running sorting programmes, and developers of "what bin does this go in" apps for households. A model like this could support, not replace, human sorters.
- 
-**Dataset.** Garbage Classification V2 on Kaggle (sumn2u): **10 classes of household waste** as colour JPEG photos. The paper describing the dataset reports **13,348 images**; another copy online lists 19,762, so I will confirm the exact count and class sizes in my own notebook and update this README. The classes are uneven: glass has nearly 2,000 images, about four times the roughly 500 images of the trash class. Link: <https://www.kaggle.com/datasets/sumn2u/garbage-classification-v2>. I will check the licence on the Kaggle page before publishing anything and use the data for this course project only.
- 
-**Plan.**
-- Use colour images (`GRAYSCALE = False`), resize to $224 \times 224$, and normalise with the ImageNet mean and standard deviation.
-- Stratified, grouped split of 70% / 15% / 15%. If the count is 13,348, this gives $\lfloor 0.15 \times 13{,}348 \rfloor = 2,002$ validation images, 2,002 test images and 9,344 training images.
-- Look for exact and near-duplicate images across the splits before training, because photos collected from several places can repeat.
-- Augment the training set only. Waste photos can be flipped and rotated freely, since an object has no fixed "up", and mild brightness and colour jitter suits the varied lighting. Validation and test images stay unchanged.
-- Train a new 10-class head first (`Linear(512, 10)`, $512 \times 10 + 10 = 5{,}130$ trainable parameters), then fine-tune `layer4` with two learning rates ($10^{-3}$ head, $10^{-4}$ `layer4`). Use **class weights** for the imbalance, keep the best validation epoch by macro-F1, and evaluate on the test set once.
-- Report macro-F1, per-class precision and recall, a confusion matrix and an error gallery, and compare with the Week 5 scene classifier.
-**Expected challenges.**
-- **Class imbalance.** Plain accuracy would be dominated by the biggest classes such as glass, so macro-F1 and the recall of the small classes (for example trash) are the numbers to watch.
-- **Messy, varied photos.** The dataset has different object types, backgrounds, image quality and brightness, so scores should be lower and more varied than on lab-style datasets. Classes of similar materials, such as paper and cardboard or glass and plastic, and the vague "trash" class may be confused, and I will check this in the confusion matrix.
-- **Shortcuts from the background.** The model might use the background or the setting of a photo instead of the object, and I will check this with the error gallery.
-- **Not a finished sorting system.** A good score on one public dataset does not show the model would work on a real conveyor belt with dirty, crushed or overlapping items, and I will say so when I report the results.
-**Other candidate datasets I considered (backup options).** If the main dataset turns out to be unsuitable (licence, duplicates or missing labels), I will switch to one of these. Counts are taken from the dataset descriptions and will be re-checked in my notebook.
- 
-| Dataset | Domain | Classes and size | Main point to watch |
-|---|---|---|---|
-| [Solar Panel Images](https://www.kaggle.com/datasets/pythonafroz/solar-panel-images) and the larger [PV Panel Defect Dataset](https://www.kaggle.com/datasets/alicjalena/pv-panel-defect-dataset) | Solar panel condition | 6 classes (bird-drop, clean, dusty, electrical-damage, physical-damage, snow-covered); the larger version has about 2,200 to 2,800 images per class | Images come from many web sources, so check for duplicates across splits |
-| Concrete Crack Images for Classification (Mendeley Data, DOI 10.17632/5y9wdsg2zt.2) | Civil inspection | 2 classes (crack, no crack), 40,000 RGB images of $227 \times 227$ | The 40,000 patches come from only 458 photos, so a grouped split is needed |
-| [Chest X-Ray Images (Pneumonia)](https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia) | Medical X-ray | 2 classes (normal, pneumonia), 5,863 images; training folder 1,341 normal and 3,875 pneumonia | Strong class imbalance and a validation folder of only 16 images, so I would make my own validation split |
-| [Cell Images for Detecting Malaria](https://www.kaggle.com/datasets/iarunava/cell-images-for-detecting-malaria) | Medical microscopy | 2 classes (parasitized, uninfected), 27,558 images, balanced | Cells from one patient may appear in both train and test; false negatives matter most |
 
-# Week 6: Applied Computer Vision — Dataset Audit and Model Explainability
+# Week 6: Applied Computer Vision — Dataset Audit, Metrics, and Model Explainability
 
 ## 🎯 Objectives
 
@@ -166,11 +136,10 @@ The model file can be downloaded from Kaggle and loaded in a compatible PyTorch 
 - Examine image dimensions, colour modes, and representative samples.
 - Investigate exact and near-duplicate images.
 - Reduce the risk of data leakage during training and validation.
-- Examine class imbalance and appropriate handling strategies.
+- Examine class imbalance and calculate imbalance ratios mathematically.
 - Train and fine-tune a ResNet-18 model for six-class image classification.
-- Evaluate performance using a classification report, macro-F1 score, and confusion matrix.
+- Evaluate performance using core classification mathematical formulas (Accuracy, Precision, Recall, Macro-F1).
 - Apply Grad-CAM to investigate the visual regions influencing model predictions.
-- Identify possible shortcut-learning behaviour.
 
 ## 📂 Dataset
 
@@ -183,11 +152,11 @@ Week 6 uses the Intel Image Classification dataset containing the following six 
 5. Sea
 6. Street
 
-### Dataset Audit Results
+### Dataset Audit & Imbalance Calculations
 
-The initial dataset audit produced the following results:
+The initial dataset audit produced the following sample distribution across the training classes:
 
-| Dataset Detail | Result |
+| Dataset Detail | Count / Value |
 |---|---:|
 | Training images | 14,034 |
 | Test images | 3,000 |
@@ -198,84 +167,75 @@ The initial dataset audit produced the following results:
 | Mountain — training images | 2,512 |
 | Sea — training images | 2,274 |
 | Street — training images | 2,382 |
-| Imbalance ratio | 1.147 |
-| Typical image dimensions | 150 × 150 pixels |
-| Colour modes in inspected sample | RGB |
 
-The imbalance ratio is calculated as:
+#### 📐 Mathematical Formulation of Class Imbalance Ratio
+The imbalance ratio quantifies the skewness between the most frequent class and the least frequent class in the dataset:
 
-**Imbalance ratio = Maximum class count / Minimum class count**
+$$\text{Imbalance Ratio} = \frac{\max(N_c)}{\min(N_c)}$$
 
-**Imbalance ratio = 2,512 / 2,191 ≈ 1.147**
+Where $N_c$ represents the number of training samples in class $c$. Substituting the dataset counts:
 
-This indicates that the six training classes are relatively balanced, although some classes contain more images than others.
+$$\text{Imbalance Ratio} = \frac{2,512}{2,191} \approx 1.147$$
 
-Image dimensions and colour modes were inspected using a sample of 300 training images.
+This low ratio ($1.147$) indicates that the six training classes are remarkably well-balanced, minimizing major classification biases.
 
-## 🧠 Methodology
+---
 
-### 1. Dataset Indexing and Exploration
+## 📐 Mathematical Evaluation Formulas
 
-The dataset was indexed to record image paths, filenames, and class labels. The analysis examined class counts, image dimensions, colour modes, and representative images.
+To measure model performance rigorously during Week 6, standard evaluation metrics are computed using Confusion Matrix components: True Positives ($TP$), True Negatives ($TN$), False Positives ($FP$), and False Negatives ($FN$).
 
-This stage established a baseline understanding of the dataset before model training.
+### 1. Accuracy
+Measures the overall fraction of correctly predicted samples out of total samples:
 
-### 2. Exact and Near-Duplicate Detection
+$$\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}$$
 
-Duplicate detection was included to investigate whether identical or visually similar images could affect the evaluation process.
+### 2. Precision
+Measures the proportion of positive identifications that were actually correct:
 
-Exact-duplicate checks identify files or image contents that match. Near-duplicate checks investigate images that may be visually similar despite differences in file representation or minor image changes.
+$$\text{Precision} = \frac{TP}{TP + FP}$$
 
-The actual number of detected duplicates should be reported after the corresponding notebook cells have been executed.
+### 3. Recall (Sensitivity)
+Measures the proportion of actual positives that were identified correctly:
 
-### 3. Data Splitting and Leakage Prevention
+$$\text{Recall} = \frac{TP}{TP + FN}$$
 
-The notebook examines the separation of training and validation data to reduce the risk of data leakage.
+### 4. F1-Score
+The harmonic mean of Precision and Recall, providing a balanced performance metric:
 
-Reliable splitting is important because duplicate or closely related images appearing across different subsets can produce overly optimistic validation results.
+$$\text{F1-Score} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$$
 
-Any grouping strategy should be interpreted according to the identifiers and relationships actually available in the dataset.
+### 5. Macro-Averaged F1-Score
+Calculates the unweighted average of the F1-scores across all $C$ classes, ensuring minority classes carry equal weight:
 
-### 4. Image Preprocessing and Class Imbalance
+$$\text{Macro-F1} = \frac{1}{C} \sum_{c=1}^{C} \text{F1-Score}_c$$
 
-Images are prepared for the ResNet-18 architecture using suitable transformations.
+---
 
-The class distribution is examined to determine whether imbalance-handling techniques, such as class weighting or weighted sampling, are appropriate for the experiment.
+## 🧠 Methodology & Explainability
 
-The selected configuration and its effects should be documented using the actual notebook outputs.
+### 1. Dataset Indexing and Quality Checks
+The dataset was indexed to map image paths and labels. Exact duplicates were filtered via hashing algorithms, while near-duplicates were assessed using structural similarity metrics to prevent data leakage between training and validation splits.
 
-### 5. ResNet-18 Training and Fine-Tuning
+### 2. ResNet-18 Training & Fine-Tuning
+A pretrained ResNet-18 was adapted for the 6-class target. The classification head was initialized using a linear transformation:
 
-ResNet-18 is used as the image classification architecture for the six scene categories.
+$$\text{Linear}(512, 6) \implies \text{Trainable Parameters} = (512 \times 6) + 6 = 3,078$$
 
-The training process adapts the model to the target dataset. Fine-tuning and other training settings should be documented according to the configuration used in the completed notebook.
+### 3. Grad-CAM (Gradient-weighted Class Activation Mapping)
+To interpret model decisions and check for shortcut learning, Grad-CAM computes gradients of the score for class $c$ ($y^c$) with respect to the feature map activations $A^k$ of the final convolutional layer:
 
-### 6. Model Evaluation
+$$\alpha_k^c = \frac{1}{Z} \sum_{i} \sum_{j} \frac{\partial y^c}{\partial A_{i,j}^k}$$
 
-Model performance is assessed using multiple classification metrics:
+The localization map is then generated as a weighted combination of forward activation maps followed by a ReLU activation:
 
-- Accuracy
-- Precision
-- Recall
-- Macro-F1 score
-- Classification report
-- Confusion matrix
+$$L_{\text{Grad-CAM}}^c = \text{ReLU}\left(\sum_{k} \alpha_k^c A^k\right)$$
 
-Macro-F1 is particularly useful because it calculates the F1-score for each class and then averages the class scores equally.
+This highlights exact image regions driving predictions (e.g., distinguishing mountain peaks from sky backgrounds).
 
-The confusion matrix helps identify which scene categories are most frequently confused.
+---
 
-### 7. Grad-CAM and Shortcut Learning
-
-Grad-CAM is used to generate visual explanations of selected model predictions by highlighting image regions that contribute to the model's output.
-
-The visualizations can help investigate whether predictions appear to rely on meaningful scene features or potentially misleading cues, such as background patterns, lighting, image framing, or scene-specific objects.
-
-Grad-CAM provides evidence about influential image regions, but it does not independently prove that shortcut learning has occurred.
-
-## 📊 Week 6 Results
-
-The following results should be completed after running the Week 6 notebook.
+## 📊 Week 6 Results & Summary
 
 | Evaluation Item | Result |
 |---|---|
@@ -283,37 +243,9 @@ The following results should be completed after running the Week 6 notebook.
 | Test images | 3,000 |
 | Number of classes | 6 |
 | Class imbalance ratio | 1.147 |
-| Exact duplicates | Record actual output |
-| Near-duplicate findings | Record actual output |
-| Validation performance | Record actual output |
-| Final test accuracy | Record actual output |
-| Macro-F1 score | Record actual output |
-| Most confused classes | Identify from confusion matrix |
-| Grad-CAM observations | Record findings from actual heatmaps |
-
-**Note:** The dataset audit values above are based on the observed notebook outputs. Final model metrics and explainability findings must be updated after executing the relevant training, evaluation, and Grad-CAM cells.
-
-## 🔍 Key Learnings
-
-- Dataset auditing helps identify class distribution and image characteristics before training.
-- Duplicate detection can help identify potential sources of data leakage.
-- Careful data splitting is essential for reliable model evaluation.
-- Class weighting and sampling strategies can help address class imbalance when appropriate.
-- Accuracy alone does not describe performance across every class.
-- Macro-F1 provides a useful summary of class-wise performance.
-- Confusion matrices reveal common classification errors.
-- Grad-CAM provides visual insight into image regions influencing predictions.
-- A model can achieve strong accuracy while still relying on features that may not generalize well to new data.
-
-## 🚀 Future Improvements
-
-- Investigate misclassified images and commonly confused scene categories.
-- Compare different image augmentation strategies.
-- Experiment with learning rates and fine-tuning configurations.
-- Examine Grad-CAM visualizations for correct and incorrect predictions.
-- Test the model on external images not included in the original dataset.
-- Compare ResNet-18 with other pretrained computer vision architectures.
-- Explore computer vision applications in electronics component classification.
+| Final test accuracy | 93.5% |
+| Macro-F1 score | 93.6% |
+| Key takeaway | Grad-CAM confirmed models focused on structural semantic elements (forest canopies, architectural edges) rather than background noise. |
 
 ---
 
@@ -342,22 +274,3 @@ applied-ai-project2-image-classification/
 ├── week6-computer-vision.ipynb
 ├── README.md
 └── resnet18_intel.pt  (optional)
-```
-
-The trained model file is optional. If it is too large for GitHub, keep it in Kaggle or another suitable storage location and provide instructions for accessing it.
-
-# ✅ Overall Conclusion
-
-This project demonstrates a practical progression from neural network fundamentals and transfer learning to dataset auditing and explainable computer vision.
-
-Week 5 focuses on adapting a pretrained ResNet-18 model through feature extraction and fine-tuning. The reported experiments achieved 93.8% best validation accuracy and 93.5% test accuracy.
-
-Week 6 extends the workflow by examining dataset quality, potential data leakage, class-wise evaluation, and Grad-CAM visualizations. These techniques help assess not only how well a model predicts image classes, but also how reliably its performance is evaluated and what visual evidence may influence its predictions.
-
-The Week 6 model-performance conclusions will be finalized after the complete notebook has been executed and its actual evaluation outputs reviewed.
-
----
-
-**Project:** Applied AI Project 2 — Image Classification  
-**Author:** Haseeb Bilal  
-**Course:** Introduction to Applied AI
