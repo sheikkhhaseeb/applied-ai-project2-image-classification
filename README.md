@@ -142,14 +142,16 @@ The model file can be downloaded from Kaggle and loaded in a compatible PyTorch 
 - Apply Grad-CAM to investigate the visual regions influencing model predictions.
 
 ## 📂 Dataset
-📁 Dataset
-Field	Description
-Dataset Name	NIH Malaria Cell Images Dataset
-Motivation	Public malaria cell dataset for infected-cell classification
-Composition	27,558 images (13,779 Parasitized, 13,779 Uninfected)
-Collection	Microscopic blood-cell images used for malaria detection research
-Labelling	Labels are taken directly from the folder names
-Uses	Suitable for teaching and research purposes
+
+
+| Field | Description |
+|--------|-------------|
+| Dataset Name | NIH Malaria Cell Images Dataset |
+| Motivation | Public malaria cell dataset for infected-cell classification. Here it is reused for a screening-style task: is a red blood cell infected with malaria? |
+| Composition | 27,558 images (13,779 Parasitized, 13,779 Uninfected) |
+| Collection | Microscopic blood-cell images used for malaria detection research |
+| Labelling | Labels are taken directly from the folder names |
+| Uses | Suitable for teaching and research purposes |
 ### Dataset Audit & Imbalance Calculations
 
 The initial dataset audit produced the following sample distribution across the training classes:
