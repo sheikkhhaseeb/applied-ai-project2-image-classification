@@ -5,7 +5,7 @@
 **Project:** Project 2 — Neural Networks, Convolutions, Transfer Learning, and Computer Vision  
 **Framework:** PyTorch  
 **Model:** ResNet-18  
-**Dataset:** Intel Image Classification Dataset  
+**Dataset:**  NIH Malaria Cell Images Dataset
 **Platform:** Kaggle Notebooks
 
 ---
