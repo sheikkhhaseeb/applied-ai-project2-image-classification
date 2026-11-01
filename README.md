@@ -45,38 +45,82 @@ Saved model: `resnet18_intel.pt`
 
 ---
 
-# Week 6: Malaria Cell Screening with a CNN
+# Week 6: Applied Computer Vision, Malaria Parasite Detection (ResNet-18)
 
-## Dataset
-NIH Malaria Cell Images: 27,558 images (13,779 Parasitized, 13,779 Uninfected), folder-based labels.
+**Task:** classify a single thin-blood-smear cell crop as **Parasitized** or **Uninfected**.
+**Intended use:** triage aid for a microscopist, not a diagnosis.
+**Primary metric (declared before training):** sensitivity (recall) on Parasitized, because missing an infected cell is the costliest mistake.
 
-## Dataset Audit
+## Dataset and Audit
+NIH / NLM thin-blood-smear images (Kaggle `iarunava/cell-images-for-detecting-malaria`).
 
-| Measure | Result |
+| Item | Result |
 |---|---|
-| Class split | 50% / 50% |
-| Imbalance ratio | 1.00 |
-| Balance score | 1.00 |
-| Class difference | 0 |
-| Entropy | 1.0 (maximum for binary) |
+| Parasitized / Uninfected | 13,779 / 13,779 (total 27,558) |
+| Imbalance ratio | 1.0 (balanced by construction) |
+| Image size (300-image sample) | median 130 × 133 px (min 61 × 82, max 229 × 187), all RGB |
+| Groups (patients/slides) | 200 groups, about 137.8 cells each |
+| Groups with Parasitized cells | 150 (50 patients contribute only healthy cells) |
 
-The dataset is perfectly balanced, so oversampling, undersampling, SMOTE, and class weights are not needed.
+The Kaggle copy contains a nested second folder (`cell_images/cell_images`). Only the top-level class folders were indexed, so no image is counted twice.
 
-## Model
-ResNet-18, 224 × 224 RGB input, ImageNet normalisation, classes: Parasitized and Uninfected. Saved as `week6_model.pt`.
+## Leakage Audit
+- **Grouped split** with `StratifiedGroupKFold` (no patient in two splits): train / val / test = 19,118 / 5,105 / 3,335 images. Shared groups: 0 / 0 / 0.
+- Test prevalence of Parasitized is 40.2% (patients cannot be split, so class balance is approximate).
+- **Exact duplicates (MD5):** 0. **Near-duplicates** (32×32 fingerprint, threshold 0.05): 0 of 3,335 test and 0 of 5,105 validation images. Closest genuine pair d = 0.065 (different cells, nothing deleted).
 
-## Grad-CAM Shortcut Check
-Heatmaps focused on cell structure, with minimal attention on background and borders. No strong evidence of shortcut learning (qualitative evidence only).
+## Transforms and Class Weights
+- **Train augmentation:** RandomResizedCrop 224 (scale 0.8 to 1.0), horizontal and vertical flips, rotation ±180°, mild ColorJitter. Evaluation: resize 224 and ImageNet normalisation. RGB kept because stain colour is evidence.
+- **Class weights** w_c = N / (K · n_c): Parasitized 0.9972, Uninfected 1.0028 (practically ordinary cross-entropy).
 
-## Test Results
+## Model and Training
+ResNet-18 with local ImageNet weights, new 2-class head (512 × 2 + 2 = 1,026 trainable parameters). Adam, model selected by validation macro-F1.
+
+| Phase | Trainable | Epochs | Best val macro-F1 |
+|---|---|---:|---:|
+| 1: feature extraction | head only (1,026) | 2 | 0.855 |
+| 2: fine-tuning | `layer4` + head (about 8.39 M) | 3 | 0.938 |
+
+Fine-tuning improved validation macro-F1 by 0.083 (+9.7% relative).
+
+## Test Results (test set used once, threshold 0.5)
+Confusion matrix (positive = Parasitized): TP 1,283, FN 57, FP 78, TN 1,917.
+
+| Class | Precision | Recall | F1 | Support |
+|---|---:|---:|---:|---:|
+| Parasitized | 0.943 | 0.957 | 0.950 | 1,340 |
+| Uninfected | 0.971 | 0.961 | 0.966 | 1,995 |
 
 | Metric | Result |
-|---|---|
-| Training / Validation / Test images | _[fill in]_ |
-| Test accuracy | _[fill in]_ |
-| Precision | _[fill in]_ |
-| Recall | _[fill in]_ |
-| F1-score | _[fill in]_ |
+|---|---:|
+| Accuracy | 0.960 |
+| Macro-F1 | 0.958 |
+| Weighted-F1 | 0.960 |
+
+## Threshold for Target Recall (≥ 0.95)
+Threshold chosen on the **validation** set, then applied once to the test set.
+
+| Quantity | Value |
+|---|---:|
+| Threshold | 0.283 |
+| Test AUC | 0.991 |
+| Test sensitivity | 0.972 (target reached) |
+| Test specificity | 0.936 |
+| Test PPV (40.2% prevalence) | 0.910 |
+| PPV at 5% prevalence | 0.444 |
+
+Lowering the threshold from 0.5 to 0.283 gives about 19 fewer missed infected cells for about 50 more false alarms. PPV depends on prevalence, so it must be quoted for the real use case.
+
+## Grad-CAM Shortcut Check
+Grad-CAM on `layer4`: α_k = (1/Z) Σ_i Σ_j ∂y^c/∂A_ij^k, heatmap = ReLU(Σ_k α_k A^k).
+
+- **Correct Uninfected cells:** heat on the cell centre (legitimate evidence).
+- **Missed Parasitized cells (3 examples):** heat near the black border or on the cell body, and in one case the visible purple parasite spot was cold (not legitimate evidence).
+- **Verdict:** no strong shortcut confirmed, but a shortcut is suspected and the check is incomplete (no correctly classified Parasitized examples were shown).
+- **Next experiments:** Grad-CAM on correct Parasitized cells, mask the background and border and re-score, remove stain colour and re-score, external validation on another hospital or microscope.
+
+## Saved Model
+`week6_model.pt` (state dict, classes, backbone `resnet18`, image size 224, grayscale False).
 
 ---
 
@@ -133,4 +177,4 @@ CNIC, phone, and email are masked before extraction and logging. A search of the
 Python, PyTorch, Torchvision, scikit-learn, spaCy, EasyOCR, NumPy, Pandas, Matplotlib, Pillow, Kaggle Notebooks
 
 ## Disclaimer
-Educational project. The case-record system is decision support only; a qualified human makes any medical decision.
+Educational project. The malaria model and case-record system are decision support only; a qualified human makes any medical decision.
