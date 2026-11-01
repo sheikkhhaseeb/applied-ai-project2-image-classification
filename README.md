@@ -190,18 +190,23 @@ The model is designed as a **triage assistance tool for microscopists**, not as 
 
 **Primary Metric:** Sensitivity (Recall) for the Parasitized class, because missing an infected cell is the most costly mistake.
 
-## Dataset and Audit
-NIH / NLM thin-blood-smear images (Kaggle `iarunava/cell-images-for-detecting-malaria`).
+##  Week 6 Dataset
 
-| Item | Result |
-|---|---|
-| Parasitized / Uninfected | 13,779 / 13,779 (total 27,558) |
-| Imbalance ratio | 1.0 (balanced by construction) |
-| Image size (300-image sample) | median 130 × 133 px (min 61 × 82, max 229 × 187), all RGB |
-| Groups (patients/slides) | 200 groups, about 137.8 cells each |
-| Groups with Parasitized cells | 150 (50 patients contribute only healthy cells) |
-
-The Kaggle copy contains a nested second folder (`cell_images/cell_images`). Only the top-level class folders were indexed, so no image is counted twice.
+| Dataset Item | Details |
+|-------------|---------|
+| Dataset Name | Malaria Cell Images Dataset |
+| Source | Kaggle / National Institutes of Health (NIH) |
+| Total Images | 27,558 |
+| Parasitized Images | 13,779 |
+| Uninfected Images | 13,779 |
+| Number of Classes | 2 |
+| Class Labels | Parasitized, Uninfected |
+| Image Format | PNG |
+| Image Type | Microscopic Blood Smear Images |
+| Input Image Size | 224 × 224 Pixels |
+| Train-Test Split | 80% Training, 20% Testing |
+| Preprocessing Techniques | Resizing, Normalization |
+| Data Augmentation | Rotation, Zoom, Horizontal Flip, Width & Height Shift |
 
 ## Leakage Audit
 - **Grouped split** with `StratifiedGroupKFold` (no patient in two splits): train / val / test = 19,118 / 5,105 / 3,335 images. Shared groups: 0 / 0 / 0.
