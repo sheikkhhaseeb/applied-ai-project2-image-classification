@@ -167,9 +167,28 @@ Fine-tuning improved validation accuracy from 90.1% to 93.8%, demonstrating the 
 
 # Week 6: Applied Computer Vision, Malaria Parasite Detection (ResNet-18)
 
-**Task:** classify a single thin-blood-smear cell crop as **Parasitized** or **Uninfected**.
-**Intended use:** triage aid for a microscopist, not a diagnosis.
-**Primary metric (declared before training):** sensitivity (recall) on Parasitized, because missing an infected cell is the costliest mistake.
+## Week 6: Project Proposal – Malaria Parasite Detection
+
+### Problem Statement
+Malaria is a serious disease caused by parasites that can be detected through blood-smear images. Manual examination of these images is time-consuming and requires expert attention.
+
+The goal of this project is to develop a Deep Learning model using **ResNet-18** to automatically classify blood-smear cell images into two categories:
+
+- **Parasitized:** Cells containing malaria parasites.
+- **Uninfected:** Healthy cells without visible parasites.
+
+### Objectives
+- Apply CNNs for medical image classification.
+- Use Transfer Learning with pre-trained ResNet-18.
+- Implement Feature Extraction and Fine-Tuning.
+- Detect infected cells with high sensitivity (recall).
+- Evaluate performance using Accuracy, Precision, Recall, F1-score, and AUC.
+- Use Grad-CAM to understand model predictions.
+
+### Intended Use
+The model is designed as a **triage assistance tool for microscopists**, not as a replacement for medical professionals or a standalone diagnostic system.
+
+**Primary Metric:** Sensitivity (Recall) for the Parasitized class, because missing an infected cell is the most costly mistake.
 
 ## Dataset and Audit
 NIH / NLM thin-blood-smear images (Kaggle `iarunava/cell-images-for-detecting-malaria`).
