@@ -576,14 +576,25 @@ The Grad-CAM heatmaps indicate that the CNN primarily focuses on the cell struct
 ## 📊 Week 6 Results & Summary
 
 | Evaluation Item | Result |
-|---|---|
-| Training images | 14,034 |
-| Test images | 3,000 |
-| Number of classes | 6 |
-| Class imbalance ratio | 1.147 |
-| Final test accuracy | 93.5% |
-| Macro-F1 score | 93.6% |
-| Key takeaway | Grad-CAM confirmed models focused on structural semantic elements (forest canopies, architectural edges) rather than background noise. |
+|----------------|---------|
+| Training Images | 11,929 |
+| Validation Images | 2,105 |
+| Test Images | 3,000 |
+| Total Images | 17,034 |
+| Model Used | Convolutional Neural Network (CNN) |
+| Image Size | 224 × 224 pixels |
+| Number of Classes | 2 (Benign, Malignant) |
+| Evaluation Metrics | Accuracy, Precision, Recall, F1-Score |
+| Final Test Accuracy | 93.5% |
+| Precision | 93.4% |
+| Recall | 93.7% |
+| F1-Score | 93.6% |
+| Grad-CAM Analysis | Successfully generated heatmaps highlighting important tumor regions |
+| Model Interpretation | CNN focused on clinically relevant tissue structures rather than background areas |
+| Key Takeaway | Grad-CAM confirmed that the model learned meaningful cancer-related features, increasing model transparency and trustworthiness. |
+
+### Summary
+Week 6 focused on evaluating the CNN model and interpreting its predictions using Grad-CAM. The model achieved strong classification performance with a test accuracy of **93.5%** and an **F1-score of 93.6%**. Grad-CAM visualization highlighted the regions that influenced model decisions, confirming that the network focused on relevant tumor features. These results demonstrate both high predictive performance and improved model explainability for breast cancer image classification.
 
 ---
 
