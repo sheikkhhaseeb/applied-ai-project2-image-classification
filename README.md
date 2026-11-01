@@ -9,8 +9,34 @@
 
 # Week 5: Neural Networks, Convolutions, and Transfer Learning
 
+## Goal
+
+The main goal of Week 5 was to understand and implement Neural Networks, Convolutional Neural Networks (CNNs), and Transfer Learning for image classification.
+
+The project focused on using a pre-trained ResNet-18 model to classify images into six categories: Buildings, Forest, Glacier, Mountain, Sea, and Street.
+The key objectives were:
+- Understand how CNNs extract important features from images.
+- Learn how pre-trained models work using Transfer Learning.
+- Implement Feature Extraction using frozen ResNet-18 layers.
+- Apply Fine-Tuning by unfreezing the final `layer4` block.
+- Compare both approaches using validation accuracy.
+- Evaluate the final model using Accuracy, Precision, Recall, and F1-Score.
+- Save the trained model as `resnet18_intel.pt` for future predictions.
+
+**Final Objective:** Build an accurate image classification model that can recognize six different environmental categories using Deep Learning techniques.
+
 ## Dataset
-Intel Image Classification (Buildings, Forest, Glacier, Mountain, Sea, Street).
+
+The **Intel Image Classification Dataset** contains 17,034 images belonging to six different classes:
+
+- Buildings
+- Forest
+- Glacier
+- Mountain
+- Sea
+- Street
+
+### Dataset Distribution
 
 | Split | Images |
 |---|---:|
@@ -19,19 +45,101 @@ Intel Image Classification (Buildings, Forest, Glacier, Mountain, Sea, Street).
 | Testing | 3,000 |
 | **Total** | **17,034** |
 
+- **Training:** Used to train the model.
+- **Validation:** Used to monitor performance and improve the model.
+- **Testing:** Used for final evaluation on unseen images.
+
 ## Method
-- **Feature extraction:** frozen ResNet-18, new 6-class head (3,078 trainable of 11,179,590 parameters). Best validation accuracy 90.1%.
-- **Fine-tuning:** `layer4` unfrozen (8,396,806 trainable parameters). Best validation accuracy 93.8% (+3.7 points).
-- **Evaluation:** held-out test set.
+
+This project uses **ResNet-18**, a pre-trained Convolutional Neural Network (CNN), with Transfer Learning.
+
+### 1. Feature Extraction
+
+In this approach, all pre-trained ResNet-18 layers were frozen, and a new classification head was added for six classes.
+
+- Trainable parameters: 3,078
+- Total parameters: 11,179,590
+- Best validation accuracy: 90.1%
+
+Only the new classification head was trained, while the original network weights remained unchanged.
+
+### 2. Fine-Tuning
+
+In this approach, the final ResNet-18 block (`layer4`) was unfrozen so that the model could learn dataset-specific features.
+
+- Trainable parameters: 8,396,806
+- Total parameters: 11,179,590
+- Best validation accuracy: 93.8%
+
+Fine-tuning improved validation accuracy by **3.7 percentage points** compared to feature extraction.
+
+### Comparison
+
+| Approach | Trainable Parameters | Validation Accuracy |
+|---|---:|---:|
+| Feature Extraction | 3,078 | 90.1% |
+| Fine-Tuning | 8,396,806 | 93.8% |
+
+## Evaluation Metrics and Formulas
+
+The final model was evaluated on 3,000 unseen test images using the following metrics.
+
+**1. Accuracy**
+
+Measures the percentage of correctly classified images.
+
+\[
+Accuracy = \frac{TP+TN}{TP+TN+FP+FN}\times100
+\]
+
+**2. Precision**
+
+Measures how many predicted positive samples are actually positive.
+
+\[
+Precision = \frac{TP}{TP+FP}\times100
+\]
+
+**3. Recall**
+
+Measures how many actual positive samples are correctly identified.
+
+\[
+Recall = \frac{TP}{TP+FN}\times100
+\]
+
+**4. F1-Score**
+
+Calculates the harmonic mean of precision and recall.
+
+\[
+F1 = 2\times\frac{Precision\times Recall}{Precision+Recall}
+\]
+
+**5. Macro-Average F1**
+
+Calculates the average F1-score across all six classes.
+
+\[
+Macro\ F1 = \frac{1}{6}\sum_{i=1}^{6}F1_i
+\]
+
+*Note: TP = True Positive, TN = True Negative, FP = False Positive, FN = False Negative.*
 
 ## Results
 
+### Overall Test Performance
+
 | Metric | Result |
 |---|---:|
-| Test accuracy | 93.5% |
-| Macro-average F1 | 93.6% |
+| Test Accuracy | **93.5%** |
+| Macro-Average F1 | **93.6%** |
 
-| Class | Precision | Recall | F1 |
+The model correctly classified approximately 93.5% of the test images.
+
+### Class-wise Results
+
+| Class | Precision | Recall | F1-Score |
 |---|---:|---:|---:|
 | Buildings | 92.8% | 93.8% | 93.3% |
 | Forest | 99.4% | 99.4% | 99.4% |
@@ -40,8 +148,20 @@ Intel Image Classification (Buildings, Forest, Glacier, Mountain, Sea, Street).
 | Sea | 94.5% | 98.4% | 96.4% |
 | Street | 94.7% | 93.0% | 93.9% |
 
-Best class: Forest. Lowest recall: Mountain and Glacier (visually similar landscapes).
-Saved model: `resnet18_intel.pt`
+### Results Analysis
+
+- **Best Class:** Forest achieved the highest F1-score of 99.4%.
+- **Sea:** Achieved the highest recall of 98.4%.
+- **Lowest Recall:** Mountain (88.6%) and Glacier (88.8%).
+- Mountain and Glacier were more challenging because their images contain visually similar landscape features.
+
+### Conclusion
+
+The fine-tuned ResNet-18 model achieved **93.5% test accuracy** and **93.6% macro-average F1-score**.
+
+Fine-tuning improved validation accuracy from 90.1% to 93.8%, demonstrating the benefit of adapting pre-trained CNN layers to a new dataset.
+
+**Saved Model:** `resnet18_intel.pt`
 
 ---
 
