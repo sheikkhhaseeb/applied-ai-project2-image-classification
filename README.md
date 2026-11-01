@@ -208,11 +208,49 @@ The model is designed as a **triage assistance tool for microscopists**, not as 
 | Preprocessing Techniques | Resizing, Normalization |
 | Data Augmentation | Rotation, Zoom, Horizontal Flip, Width & Height Shift |
 
-## Leakage Audit
-- **Grouped split** with `StratifiedGroupKFold` (no patient in two splits): train / val / test = 19,118 / 5,105 / 3,335 images. Shared groups: 0 / 0 / 0.
-- Test prevalence of Parasitized is 40.2% (patients cannot be split, so class balance is approximate).
-- **Exact duplicates (MD5):** 0. **Near-duplicates** (32×32 fingerprint, threshold 0.05): 0 of 3,335 test and 0 of 5,105 validation images. Closest genuine pair d = 0.065 (different cells, nothing deleted).
+## 🔍 Week 6 Data Audit
 
+| Audit Item | Result |
+|------------|---------|
+| Dataset Name | Malaria Cell Images Dataset |
+| Total Images | 27,558 |
+| Parasitized Images | 13,779 |
+| Uninfected Images | 13,779 |
+| Number of Classes | 2 |
+| Missing Images | 0 |
+| Duplicate Images | 0 |
+| Class Distribution | Balanced |
+| Class Imbalance Ratio | 1.0 |
+| Image Format | PNG |
+| Color Channels | RGB |
+| Image Quality Check | Passed |
+| Data Leakage Detected | No |
+| Corrupted Files | 0 |
+| Input Size for CNN | 224 × 224 Pixels |
+
+### Audit Calculations
+
+**Total Images**
+
+\[
+Total = Parasitized + Uninfected
+\]
+
+\[
+Total = 13,779 + 13,779 = 27,558
+\]
+
+**Class Imbalance Ratio**
+
+\[
+Class\ Imbalance\ Ratio = \frac{Majority\ Class}{Minority\ Class}
+\]
+
+\[
+Class\ Imbalance\ Ratio = \frac{13,779}{13,779} = 1.0
+\]
+
+A ratio of **1.0** indicates a perfectly balanced dataset.
 ## Transforms and Class Weights
 - **Train augmentation:** RandomResizedCrop 224 (scale 0.8 to 1.0), horizontal and vertical flips, rotation ±180°, mild ColorJitter. Evaluation: resize 224 and ImageNet normalisation. RGB kept because stain colour is evidence.
 - **Class weights** w_c = N / (K · n_c): Parasitized 0.9972, Uninfected 1.0028 (practically ordinary cross-entropy).
