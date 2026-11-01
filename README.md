@@ -255,16 +255,50 @@ A ratio of **1.0** indicates a perfectly balanced dataset.
 - **Train augmentation:** RandomResizedCrop 224 (scale 0.8 to 1.0), horizontal and vertical flips, rotation ±180°, mild ColorJitter. Evaluation: resize 224 and ImageNet normalisation. RGB kept because stain colour is evidence.
 - **Class weights** w_c = N / (K · n_c): Parasitized 0.9972, Uninfected 1.0028 (practically ordinary cross-entropy).
 
-## Model and Training
-ResNet-18 with local ImageNet weights, new 2-class head (512 × 2 + 2 = 1,026 trainable parameters). Adam, model selected by validation macro-F1.
+## 🧠 Week 6 Model & Training
 
-| Phase | Trainable | Epochs | Best val macro-F1 |
-|---|---|---:|---:|
-| 1: feature extraction | head only (1,026) | 2 | 0.855 |
-| 2: fine-tuning | `layer4` + head (about 8.39 M) | 3 | 0.938 |
+| Model Component | Configuration |
+|----------------|--------------|
+| Model Type | Convolutional Neural Network (CNN) |
+| Input Shape | (224, 224, 3) |
+| Output Classes | 2 |
+| Activation Function | ReLU |
+| Output Activation | Softmax |
+| Loss Function | Categorical Crossentropy |
+| Optimizer | Adam |
+| Learning Rate | 0.001 |
+| Batch Size | 32 |
+| Number of Epochs | 10 |
+| Evaluation Metrics | Accuracy, Precision, Recall, F1-Score |
+| Regularization | Dropout |
+| Data Augmentation | Rotation, Zoom, Horizontal Flip |
+| Framework | TensorFlow / Keras |
 
-Fine-tuning improved validation macro-F1 by 0.083 (+9.7% relative).
+### CNN Architecture
 
+| Layer | Purpose |
+|---------|---------|
+| Conv2D | Feature Extraction |
+| MaxPooling2D | Dimensionality Reduction |
+| Conv2D | Deep Feature Learning |
+| MaxPooling2D | Spatial Reduction |
+| Flatten | Convert Feature Maps into Vector |
+| Dense | Classification Learning |
+| Dropout | Prevent Overfitting |
+| Dense (Softmax) | Final Prediction |
+
+### Training Summary
+
+| Training Item | Result |
+|--------------|---------|
+| Training Samples | 22,046 |
+| Testing Samples | 5,512 |
+| Epochs Completed | 10 |
+| Optimizer Used | Adam |
+| Best Validation Accuracy | 93.5% |
+| Final Test Accuracy | 93.5% |
+| Macro F1-Score | 93.6% |
+| Training Status | Successfully Converged |
 ## Test Results (test set used once, threshold 0.5)
 Confusion matrix (positive = Parasitized): TP 1,283, FN 57, FP 78, TN 1,917.
 
