@@ -1,9 +1,9 @@
-# Applied AI Project 2: Computer Vision, Text, and Multimodal AI
+# Applied AI Project 2: Computer Vision, Text, and Multimodal AI, Served as a FastAPI Web Service
 
 **Author:** Haseeb Bilal
 **Course:** Introduction to Applied AI
-**Frameworks:** PyTorch, scikit-learn, spaCy, EasyOCR
-**Platform:** Kaggle Notebooks
+**Frameworks:** PyTorch, scikit-learn, spaCy, EasyOCR, FastAPI, pytest
+**Platform:** Kaggle Notebooks (Weeks 5 to 7), local machine (Week 8 API)
 
 ---
 
@@ -572,3 +572,161 @@ Case 2 shows image/text disagreement: one Uninfected cell is weak evidence again
 ## Reproduce
 
 Kaggle inputs: `uciml/sms-spam-collection-dataset` (`spam.csv`), `iarunava/cell-images-for-detecting-malaria`, and the Week 6 checkpoint `week6_model.pt`. Run `week7-text-and-multimodal.ipynb` top to bottom (seeds: `random_state=42`).
+
+---
+
+# Week 8: Shipping the Model as a Tested API (FastAPI)
+
+## Summary
+
+- **Service:** FastAPI app (`app.py`) that serves the Week 6 ResNet-18 malaria model (`week6_model.pt`) and the Week 7 text evidence (PII masking, regex fields, urgent terms) as one JSON case record.
+- **Endpoints:** `GET /health`, `POST /predict` (image → probabilities), `POST /analyze` (image + note → `CaseRecord` with decision REFER/ROUTINE).
+- **Tests:** 8 automated tests in `test_api.py`, including a parity test (API probabilities = direct model probabilities) and a PII leak test.
+- **Latency:** p50 / p95 measured with `bench.py` on my own laptop (numbers below).
+- **Safety:** upload type and size checks, corrupt-file handling, PII masked before extraction, optional API key.
+
+## Configuration (the three settings changed for my project)
+
+| Setting | Value | Why |
+|---|---|---|
+| `MODEL_PATH` | `week6_model.pt` | Week 6 checkpoint (state dict, classes, backbone `resnet18`, 224 px, grayscale False) |
+| `POSITIVE` | `Parasitized` | The class that must not be missed (missed infected cell is the costliest error) |
+| `URGENT` | `fever, chills, sweating, headache, ...` | Malaria warning words, same as the Week 7 pipeline |
+| `THRESHOLD` | `0.5` (default; env var) | Week 6 recall-oriented threshold is `0.283` and can be set with `THRESHOLD=0.283` |
+| `MAX_BYTES` | 5 MB | Reject oversized uploads |
+| `API_KEY` | unset (env var) | When set, requests need the `X-API-Key` header |
+
+## Endpoints and error handling
+
+| Endpoint | Input | Output |
+|---|---|---|
+| `GET /health` | none | `status`, `model_loaded`, `classes`, `positive` |
+| `POST /predict` | image file (JPEG/PNG) | `label`, `probabilities`, `latency_ms` |
+| `POST /analyze` | image file + `note` (max 2,000 chars) | `prediction`, `note_masked`, `fields`, `urgent_terms`, `decision`, `reasons`, `disclaimer` |
+
+| Situation | Status | Reason |
+|---|---|---|
+| Wrong content type (PDF, txt) | **415** | Client sent a type the server does not accept |
+| File over 5 MB | **413** | Payload too large |
+| Not a readable image (corrupt, fake `.jpg`) | **400** | Bad client input, no stack trace shown |
+| Missing file / missing note / note over 2,000 chars | **422** | Request does not match the schema |
+| Wrong or missing API key (when `API_KEY` is set) | **401** | Not authorised |
+
+## How to run
+
+```bash
+# Windows (Mac/Linux: source .venv/bin/activate and use \ instead of ^)
+python -m venv .venv
+.venv\Scripts\activate
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install fastapi uvicorn python-multipart pillow pytest httpx numpy
+
+uvicorn app:app --reload          # then open http://127.0.0.1:8000/docs
+pytest -q test_api.py             # 8 tests
+python bench.py                   # run while the server is running
+```
+
+### API usage examples
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict ^
+     -F "file=@sample.jpeg;type=image/jpeg"
+
+curl -X POST http://127.0.0.1:8000/analyze ^
+     -F "file=@sample.jpeg;type=image/jpeg" ^
+     -F "note=Fever and chills since Monday. Call 0300-1234567"
+
+curl -X POST http://127.0.0.1:8000/predict ^
+     -F "file=@app.py;type=text/plain"          # -> 415 {"detail":"Upload a JPEG or PNG image"}
+```
+
+Paste your real outputs here:
+
+```text
+⚠️ FILL IN: paste the JSON returned by /predict
+⚠️ FILL IN: paste the JSON returned by /analyze (check note_masked shows [PHONE])
+⚠️ FILL IN: paste the 415 response
+```
+
+## Automated tests
+
+| # | Test | What it checks |
+|---|---|---|
+| 1 | `test_health` | `/health` returns 200 and `model_loaded` is true |
+| 2 | `test_predict_schema_and_probabilities` | 200 and probabilities sum to 1 (within 1e-3) |
+| 3 | `test_parity_with_direct_model` | API probabilities equal calling the model directly (same preprocessing as training) |
+| 4 | `test_rejects_wrong_type` | `text/plain` upload gives 415 |
+| 5 | `test_rejects_too_large` | upload of MAX_BYTES + 1 gives 413 |
+| 6 | `test_rejects_corrupt_image` | bytes that are not an image give 400 |
+| 7 | `test_missing_file_is_422` | request without a file gives 422 |
+| 8 | `test_analyze_masks_pii` | phone and CNIC digits appear nowhere in the response; decision is REFER |
+
+```text
+(.venv) C:\Users\Haseeb\Desktop\p2-api> pytest -q test_api.py
+........                                                         [100%]
+8 passed, 1 warning in 15.12s
+```
+
+The one warning is a `StarletteDeprecationWarning` (FastAPI's `TestClient` prefers `httpx2`); it does not affect the results.
+
+## Latency benchmark
+
+Hardware: HP EliteBook 840 G3, Intel Core i5-6300U @ 2.40 GHz (2 cores / 4 threads), 8 GB RAM (7.88 GB usable), Windows 10, CPU-only PyTorch, server run with one worker (`uvicorn app:app`).
+
+```text
+(.venv) C:\Users\Haseeb\Desktop\p2-api> python bench.py
+n=50 p50=104 ms p95=133 ms max=181 ms
+Throughput with 1 worker ~ 9.2 requests/s
+```
+
+p95 / p50 = 133 / 104 = 1.28, so the tail is mild (no sign of requests queueing or blocking). The numbers are slower than a typical newer laptop because this is a 2016 dual-core CPU running PyTorch without a GPU.
+
+**Capacity with Little's law.** One worker handles one request at a time, so concurrency $L=1$ and $L=\lambda W$ gives $\lambda=1/W$. With median latency $W=p50$:
+
+$$\lambda=\frac{1000}{p50\ (\text{ms})}\ \text{requests/s},\qquad \text{requests per day}=\lambda\times86{,}400$$
+
+With my $p50=104$ ms: $\lambda=1000/104=9.6$ requests/s, so $9.6\times86{,}400\approx\mathbf{831{,}000}$ requests per day for one worker. The benchmark's mean-based throughput (9.2 requests/s) gives $9.2\times86{,}400\approx795{,}000$ per day. This is an upper bound: it assumes constant load, no queueing and no other work on the machine, so I would plan for well below this number.
+
+## One bad input beyond the tests
+
+⚠️ FILL IN: describe one input you tried that is not in the 8 tests and what the API returned. Examples: an empty (0-byte) file sent as `image/jpeg`, a `.jpg` that is really text, a PNG with a transparent (RGBA) channel, a note with 2,001 characters (expected 422), a request with the wrong `X-API-Key` (expected 401).
+
+| Input | Status | Response |
+|---|---|---|
+| ⚠️ FILL IN | | |
+
+---
+
+## Check Your Understanding (Week 8)
+
+**1. A client uploads a PDF to `/predict`. Which status code, and why not 500?**
+**415 Unsupported Media Type.** The request is well-formed but the file type is not accepted, so this is the client's mistake (4xx). A 500 means the server itself failed; returning 500 for bad input would hide a normal validation case behind a fake server bug and could leak a stack trace.
+
+**2. Why is the model loaded in `lifespan` rather than inside the endpoint?**
+Reading the checkpoint and rebuilding ResNet-18 is slow. In `lifespan` it happens once at start-up and every request only runs inference. Inside the endpoint, every request would pay the loading cost and allocate a new copy of the model in memory.
+
+**3. p50 = 40 ms and p95 = 400 ms. What does that tell you, and what would you check?**
+Typical requests are fast, but about 1 in 20 takes 10 times longer, so the delay is intermittent (a tail), not constant. I would check blocking code on the event loop, requests queueing behind each other, a slow first request (warm-up), unusually large images, CPU throttling or background programs, and I would also look at p99 and max.
+
+**4. 500,000 requests a day, peak 5 times the average, 25 requests/s per worker. How many workers?**
+Average $=500{,}000/86{,}400=5.79$ requests/s. Peak $=5\times5.79=28.9$ requests/s. Workers $=28.9/25=1.16$, rounded up to **2 workers**. In practice I would run 3 to keep headroom for bursts.
+
+**5. Why can model inference inside an `async def` endpoint slow down other requests?**
+Inference is CPU-bound and blocking. An async server runs on a single event-loop thread; while the model computes, the loop cannot accept or answer other requests (even `/health`), so their latency rises. `run_in_threadpool` moves the heavy call to a worker thread and keeps the loop free.
+
+**6. How many communication channels does a 4-person team have?**
+$n(n-1)/2=4\times3/2=\mathbf{6}$.
+
+---
+
+## Week 8 Limitations and honest notes
+
+| # | Limitation | Consequence |
+|---|---|---|
+| 1 | The API masks only CNIC and phone numbers (Week 7 also masked email) | Emails, names and MRNs can still appear in `note_masked`; add more patterns and a name masker before real use |
+| 2 | `/analyze` uses `THRESHOLD=0.5` by default, while Week 6 chose 0.283 for recall ≥ 0.95 | Set `THRESHOLD=0.283` in deployment to match the recall target (about 19 fewer missed infected cells for about 50 more false alarms on the Week 6 test set) |
+| 3 | `sample.jpeg` is a cell image from the Week 6 dataset | Parity and format tests show the service is correct, not that the model is accurate on new microscopes |
+| 4 | Benchmark sends the same image 50 times to a local server | No network delay, warm caches and one image size; real p95 will be higher |
+| 5 | Urgent terms are matched as substrings (`'crack' in text`) | Words such as "cracker" would match; use word boundaries for production |
+| 6 | Week 6 Grad-CAM check was incomplete (shortcut suspected) | The service must stay decision support for microscopists, never a standalone diagnosis |
+| 7 | No authentication unless `API_KEY` is set; no rate limiting | Do not expose publicly as is |
