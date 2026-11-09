@@ -1,8 +1,11 @@
 # Applied AI Project 2: Computer Vision, Text, and Multimodal AI, Served as a FastAPI Web Service
 
 **Author:** Haseeb Bilal
+
 **Course:** Introduction to Applied AI
+
 **Frameworks:** PyTorch, scikit-learn, spaCy, EasyOCR, FastAPI, pytest
+
 **Platform:** Kaggle Notebooks (Weeks 5 to 7), local machine (Week 8 API)
 
 ---
