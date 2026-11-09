@@ -6,6 +6,20 @@
 **Platform:** Kaggle Notebooks (Weeks 5 to 7), local machine (Week 8 API)
 
 ---
+## 📁 Repository Structure
+
+| File | Description |
+|------|-------------|
+| `README.md` | Project documentation |
+| `app.py` | Main application file |
+| `bench.py` | Benchmarking script |
+| `requirements.txt` | Python dependencies |
+| `sample.jpeg` | Sample image for testing |
+| `test_api.py` | API testing script |
+| `week5-neural-networks-transfer-learning-ipyn...ipynb` | Week 5: Neural networks & transfer learning |
+| `week6-computer-vision (2).ipynb` | Week 6: Computer vision |
+| `week7-text-and-multimodal.ipynb` | Week 7: Text and multimodal |
+
 
 # Week 5: Neural Networks, Convolutions, and Transfer Learning
 
